@@ -36,3 +36,52 @@ The pinned `1.141.2` upstream `build/npm/preinstall.ts` checks Visual Studio 202
 - [ ] Unmodified baseline remains pinned and recoverable; upstream diff bounded and documented.
 - [ ] MIT and required third-party notices preserved.
 - [ ] Local logs reviewed/redacted; Draft PR ready for independent review and owner sign-off.
+
+## Implementation record (2026-10-15, Windows x64 local build)
+
+### Identity fields changed (`product.json`)
+
+| Field | Upstream (Code - OSS) | Nayther Scope Dev |
+|---|---|---|
+| `nameShort` / `nameLong` | Code - OSS | Nayther Scope Dev |
+| `applicationName` | code-oss | nayther-scope |
+| `dataFolderName` / `sharedDataFolderName` | .vscode-oss / .vscode-oss-shared | .nayther-scope-dev / .nayther-scope-dev-shared |
+| `serverApplicationName` / `serverDataFolderName` / `tunnelApplicationName` | code-server-oss / .vscode-server-oss / code-tunnel-oss | nayther-scope-server / .nayther-scope-server-dev / nayther-scope-tunnel |
+| `win32MutexName`, tunnel mutexes | vscodeoss* | naytherscopedev* |
+| `win32DirName` / `win32NameVersion` / `win32RegValueName` / `win32AppUserModelId` / `win32ShellNameShort` | Microsoft Code OSS / CodeOSS / Microsoft.CodeOSS / C&ode - OSS | Nayther Scope Dev / NaytherScopeDev / Nayther.Scope.Dev / Nayther &Scope Dev |
+| `win32{x64,arm64}{,User}AppId` | upstream GUIDs | four newly generated GUIDs (not registered anywhere yet) |
+| `darwinBundleIdentifier`, `darwin*UUID`, `linuxDesktopName`, `linuxIconName` | com.visualstudio.* | dev.nayther.* (macOS/Linux not built or verified in Gate 1) |
+| `urlProtocol` | code-oss | nayther-scope |
+| `reportIssueUrl` | microsoft/vscode issues | this fork's issues |
+| `builtInExtensionsEnabledWithAutoUpdates` | `GitHub.copilot-chat` | `[]` |
+| `voiceWsUrl` | Microsoft voice endpoint | removed |
+
+Provisional icon: `resources/win32/code.ico`, `code_150x150.png`, `code_70x70.png` (generated "N" mark, no Microsoft artwork); `VisualElementsManifest.xml` short name updated.
+
+### Behavioural defaults changed (source, two one-line edits)
+
+- `chat.disableAIFeatures`: default `false` -> `true` (`chat.shared.contribution.ts`). Copilot/chat is opt-in.
+- `workbench.welcomePage.experimentalOnboarding`: default `true` -> `false` (`gettingStarted.contribution.ts`). The onboarding wizard is a GitHub Copilot sign-in flow.
+- `product.json` `configurationDefaults` was tried and removed: it is only honoured by web embedders, not the desktop app.
+
+### Service inventory (clean first start, scratch folder)
+
+| Area | Status | Basis |
+|---|---|---|
+| Extension gallery / Marketplace | Disabled | No `extensionsGallery` in product.json (upstream OSS default) |
+| Auto-update | Disabled | No update URL; main log `update#setState disabled` |
+| Telemetry | Disabled | No `aiConfig` / telemetry keys in product.json |
+| Settings Sync | Disabled | No `configurationSync` store in product.json |
+| Copilot / GitHub sign-in | Opt-in only | Default `chat.disableAIFeatures=true`; no sign-in prompt on first start; endpoints remain in `defaultChatAgent` (unchanged upstream shape) |
+| Outbound connections after 40 s idle | None observed | Per-process TCP table for all app processes |
+| Webview CDN fallback (`vscode-cdn.net`) | Unknown / unused on desktop | Hard-coded browser-only fallback; not exercised |
+| Built-in `ms-vscode.js-debug*` | Present, MIT, fetched from GitHub at build time | Not Marketplace; review for redistribution at Gate 3 |
+| Built-in `github-authentication` / Copilot extension sources | Present, inactive until user opts in | Source tree unchanged |
+
+### Known residuals
+
+- Window title shows "Nayther Scope Dev Dev" in unbuilt dev runs (upstream appends " Dev").
+- Walkthrough text still reads "Get started with VS Code"; in-app title-bar/walkthrough logo is still the upstream SVG. Localized strings and `resources/*/code-icon.svg` are not rebranded in Gate 1.
+- Installer bitmaps (`inno-*.bmp`) and macOS/Linux assets are unchanged.
+- Dev-mode shared data root is `~/.nayther-scope-dev-shared`, outside `--user-data-dir`.
+- No automated tests were run for the two default changes; unit tests asserting the old defaults, if any, are unverified.
