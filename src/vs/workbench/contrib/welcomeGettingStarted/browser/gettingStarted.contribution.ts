@@ -342,12 +342,9 @@ configurationRegistry.registerConfiguration({
 		'workbench.welcomePage.experimentalOnboarding': {
 			scope: ConfigurationScope.APPLICATION,
 			type: 'boolean',
-			default: true,
+			default: false, // Nayther Scope (NAY-94): onboarding is a Copilot sign-in flow
 			tags: ['experimental'],
 			description: localize('workbench.welcomePage.experimentalOnboarding', "When enabled, show the new onboarding experience instead of the classic walkthrough on first launch."),
-			experiment: {
-				mode: 'auto'
-			}
 		}
 	}
 });

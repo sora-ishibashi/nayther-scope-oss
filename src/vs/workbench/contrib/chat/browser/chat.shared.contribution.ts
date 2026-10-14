@@ -2352,13 +2352,13 @@ configurationRegistry.registerConfiguration({
 		[ChatAIDisabledSettingId]: {
 			type: 'boolean',
 			description: nls.localize('chat.disableAIFeatures', "Disable and hide built-in AI features provided by GitHub Copilot, including chat and inline suggestions."),
-			default: false,
+			default: true, // Nayther Scope (NAY-94): AI/Copilot features are opt-in
 			scope: ConfigurationScope.WINDOW,
 		},
 		[ChatConfiguration.TitleBarSignInEnabled]: {
 			type: 'boolean',
 			description: nls.localize('chat.titleBar.signIn.enabled', "Controls whether the Copilot Sign In button is shown in the title bar when signed out. When disabled, the Sign In affordance falls back to the status bar."),
-			default: true,
+			default: false, // Nayther Scope (NAY-94): no sign-in affordance unless AI features are opted in
 		},
 		[ChatConfiguration.WelcomePageSignInEnabled]: {
 			type: 'boolean',
