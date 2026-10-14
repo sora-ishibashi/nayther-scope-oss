@@ -3,9 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// Nayther Scope (NAY-94): original test written for the Nayther Scope fork. The header above is the file header enforced
+// by this repository's lint rule; the file is licensed under the repository MIT license (License.txt).
+
 import assert from 'assert';
 import { existsSync, readFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { dirname, join } from '../../../../base/common/path.js';
 import { fileURLToPath } from 'url';
 import { ensureNoDisposablesAreLeakedInTestSuite } from '../../../../base/test/common/utils.js';
 

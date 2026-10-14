@@ -1,10 +1,12 @@
 # Nayther Scope — Windows desktop Gate 1 (NAY-94)
 
-**Status:** In progress / design-first Draft. This is an **independent, unofficial** desktop application built from the open-source Code - OSS repository. It is **not Microsoft VS Code** and may not use Microsoft marks, proprietary release binaries, product services, credentials, or extension marketplace rights merely by virtue of the MIT source license.
+**Status:** Implementation complete for review; **Draft, not accepted**. Owner GUI acceptance of the latest build (Help → About, Explorer, Editor, Terminal, Git) is the only open acceptance item. This is an **independent, unofficial** desktop application built from the open-source Code - OSS repository. It is **not Microsoft VS Code** and may not use Microsoft marks, proprietary release binaries, product services, credentials, or extension marketplace rights merely by virtue of the MIT source license.
 
 **Base:** [upstream Code - OSS 1.141.2](https://github.com/microsoft/vscode/tree/1.141.2), exactly `16507d91be0dc1ce4f94c04d4d0430210b8685d9`. On this fork, `baseline/code-oss-1.141.2` is a never-modify reference; `main` tracks upstream separately. Implement exclusively on `feat/nay-94-gate1-identity`. All PRs for Gate 1 **must target the pinned baseline branch**, never floating `main`.
 
 **Tracking:** [NAY-94](https://nayther.atlassian.net/browse/NAY-94); predecessor [NAY-92](https://nayther.atlassian.net/browse/NAY-92). Existing Scope Core and Canvas remain in a separate repo; **no integration until Gate 2**.
+
+**How to read this file:** "Gate 1 goals" and "Windows-specific notes" are the original design intent. "Acceptance checklist" and everything after it describe the **current** state. The tracked review rounds (PR #1 reviews 5521583464, 5521622128, 5521891428) are summarised at the end; earlier intermediate wording (for example a doubled "Dev" title, "Get started with VS Code", or "no automated tests") is superseded and no longer describes the build.
 
 ## Gate 1 goals
 
@@ -27,21 +29,26 @@ The pinned `1.141.2` upstream `build/npm/preinstall.ts` checks Visual Studio 202
 - **Gate 1 excludes:** React Flow Canvas/GraphDocument integration (Gate 2), signed installer/portable Windows release (Gate 3), public release (Gate 4), upstream bug issue creation, unapproved Microsoft service use, destructive workspace cleanup.
 - **No merge, tag, release, credentials or profile deletion** without explicit owner approval.
 
-## Definition of done
+## Acceptance checklist (current state)
 
-- [ ] Independently named Nayther Scope Dev app (window, About, icons and principal identity fields).
-- [ ] Independent Windows AppId / protocol / mutex / profile and extensions directories confirmed non-colliding.
-- [ ] No unapproved auth/telemetry/Marketplace/updates on first clean startup; service inventory with supported/disabled/unknown statuses.
-- [ ] Windows build and launch PASS; scratch Explorer/editor/terminal/Git smoke PASS.
-- [ ] Unmodified baseline remains pinned and recoverable; upstream diff bounded and documented.
-- [ ] MIT and required third-party notices preserved.
-- [ ] Local logs reviewed/redacted; Draft PR ready for independent review and owner sign-off.
+Legend: **PASS** = verified on this branch; **OWNER** = needs the owner's hands-on check of the latest build; **DEFERRED** = intentionally Gate 3.
 
-## Implementation record (2026-10-15, Windows x64 local build)
+| # | Item | State | Evidence |
+|---|---|---|---|
+| 1 | Independently named app: window title, executable, in-app icon and first-run text | **PASS** | Title `Nayther Scope Dev` (single ` Dev`), executable `Nayther Scope.exe`, "N" title-bar icon, "Get started with Nayther Scope" (screenshots kept locally, not published) |
+| 1b | Help → About identity | **OWNER** | Not capturable by the automated smoke |
+| 2 | AppId / protocol / mutex / data roots do not reuse upstream values | **PASS** | `naytherProduct.test.ts` ("identity does not reuse …") + table below |
+| 3 | No unapproved auth / telemetry / Marketplace / update on a clean first start | **PASS (bounded)** | Service inventory below; network observation limits stated |
+| 4 | Windows build and launch | **PASS** | `npm install`, `npm run compile` (0 errors) and launch from `scripts\code.bat` on Windows 11 x64 |
+| 5 | Scratch Explorer / editor / terminal / Git smoke | **OWNER** | Owner reported 4/4 PASS on commit `41cf779` (review 5521622128). Automated SendKeys smoke on a later build showed the Source Control panel listing the scratch changes and the Terminal panel opening; terminal output was not captured. Must be repeated by the owner on this HEAD |
+| 6 | Baseline remains pinned and recoverable | **PASS** | `baseline/code-oss-1.141.2` = `16507d91…`, untouched; Gate 1 work is in a separate worktree/branch |
+| 7 | MIT and Microsoft notices preserved | **PASS** | No licence or copyright text removed; new files carry the repository header (see "Licensing of new files") |
+| 8 | Logs reviewed / redacted; no secrets, profiles or extensions in the PR | **PASS** | Raw evidence stays on the local machine only |
+| 9 | Installer images, non-Windows assets, Sessions window brand, language packs, distribution licence inventory | **DEFERRED** | Gate 3 |
 
-### Identity fields changed (`product.json`)
+## Identity fields changed (`product.json`)
 
-| Field | Upstream (Code - OSS) | Nayther Scope Dev |
+| Field | Upstream (Code - OSS) | Nayther Scope |
 |---|---|---|
 | `nameShort` / `nameLong` | Code - OSS | Nayther Scope (the dev run appends ` Dev` once: window title "Nayther Scope Dev", built exe `Nayther Scope.exe`) |
 | `applicationName` | code-oss | nayther-scope |
@@ -57,65 +64,103 @@ The pinned `1.141.2` upstream `build/npm/preinstall.ts` checks Visual Studio 202
 | `voiceWsUrl` | Microsoft voice endpoint | removed |
 | `trustedExtensionAuthAccess` | GitHub.copilot-chat / vscode.github-authentication trusted | `{}` (every extension must ask for account access) |
 
-Provisional icon: `resources/win32/code.ico`, `code_150x150.png`, `code_70x70.png` (generated "N" mark, no Microsoft artwork); `VisualElementsManifest.xml` short name updated.
+Provisional icon: `resources/win32/code.ico`, `code_150x150.png`, `code_70x70.png` (generated "N" mark, no Microsoft artwork); `VisualElementsManifest.xml` short name updated. In-app marks: `src/vs/workbench/browser/media/code-icon.svg` and the four `letterpress-*.svg` editor watermarks are replaced with the same original "N" mark.
 
-### Behavioural defaults changed (source, two one-line edits)
+## Behavioural changes in source
 
-- `chat.disableAIFeatures`: default `false` -> `true` (`chat.shared.contribution.ts`). Copilot/chat is opt-in.
-- `workbench.welcomePage.experimentalOnboarding`: default `true` -> `false` (`gettingStarted.contribution.ts`). The onboarding wizard is a GitHub Copilot sign-in flow.
-- `product.json` `configurationDefaults` was tried and removed: it is only honoured by web embedders, not the desktop app.
+| File | Change | Reason |
+|---|---|---|
+| `chat.shared.contribution.ts` | `chat.disableAIFeatures` default `false` → `true` | Copilot/AI is opt-in |
+| `chat.shared.contribution.ts` | `chat.titleBar.signIn.enabled` default `true` → `false` | No sign-in affordance in the title bar unless AI is enabled |
+| `gettingStarted.contribution.ts` | `workbench.welcomePage.experimentalOnboarding` default `true` → `false`; `experiment: auto` override removed | The onboarding wizard is a Copilot sign-in flow |
+| `gettingStartedContent.ts` | `VS Code` → `Nayther Scope`; Copilot steps additionally require `!config.chat.disableAIFeatures`; Marketplace and Settings Sync steps hidden (`when: 'false'`); external video relabelled as upstream | First-run text must not present unsupported upstream services as Nayther features |
+| `onboardingVariationA.ts` | Title and aria label read `Nayther Scope` | Brand |
 
-### Service inventory (clean first start, scratch folder)
+`product.json` `configurationDefaults` was tried and removed: it is only honoured by web embedders, not the desktop app.
+
+## First-run link and walkthrough audit
+
+| Surface | Before | Now |
+|---|---|---|
+| Setup walkthrough → "Watch video tutorials" (`aka.ms/vscode-getting-started-video`) | Presented as Nayther Scope's own tutorial | Titled "Watch upstream VS Code video tutorials"; text states they are published by the upstream Visual Studio Code project (Microsoft) and that Nayther Scope has no Marketplace, Settings Sync or Copilot service. The link still opens Microsoft's page: it is an upstream reference, not a Nayther feature |
+| Setup walkthrough → Copilot steps | Conditioned on chat state only | Also require AI features to be enabled; image alt text names GitHub Copilot |
+| Essentials walkthrough → "Tune your settings" (mentions Settings Sync) | Shown when a sync status exists | Hidden: no sync store in product.json |
+| Essentials walkthrough → "Code with extensions" (Marketplace picture and "Browse Popular Extensions") | Shown | Hidden: no `extensionsGallery` in product.json. Local `.vsix` installation is an upstream feature that is expected to remain available (not exercised in Gate 1) |
+| Web walkthrough variants | n/a on desktop (`when: isWeb`) | Text rebranded only; not reachable in the desktop app |
+| Built-in walkthrough illustrations (`learn.svg`, `settings.svg`, `multi-file-edits.svg`, `extensions*.svg`) | Upstream VS Code artwork | Unchanged; the marketplace/Copilot illustrations are only reachable through the hidden or opt-in steps above. Attributed to the upstream project under its MIT licence |
+| Other Microsoft/GitHub links remaining in the tree (e.g. `aka.ms/github-copilot-*` in `defaultChatAgent`, Copilot terms) | Upstream | Unchanged and only reachable after the user enables AI features |
+
+## Service inventory (clean first start, scratch folder)
 
 | Area | Status | Basis |
 |---|---|---|
-| Extension gallery / Marketplace | Disabled | No `extensionsGallery` in product.json (upstream OSS default) |
+| Extension gallery / Marketplace | Not configured | No `extensionsGallery` in product.json (upstream OSS default); UI entry points in first-run text hidden |
 | Auto-update | Disabled | No update URL; main log `update#setState disabled` |
-| Telemetry | Disabled | No `aiConfig` / telemetry keys in product.json |
-| Settings Sync | Disabled | No `configurationSync` store in product.json |
-| Copilot / GitHub sign-in | Opt-in only | Default `chat.disableAIFeatures=true`; no sign-in prompt on first start; endpoints remain in `defaultChatAgent` (unchanged upstream shape) |
-| Outbound connections after 40 s idle | None observed | Per-process TCP table for all app processes |
-| Webview CDN fallback (`vscode-cdn.net`) | Unknown / unused on desktop | Hard-coded browser-only fallback; not exercised |
-| Built-in `ms-vscode.js-debug*` | Present, MIT, fetched from GitHub at build time | Not Marketplace; review for redistribution at Gate 3 |
-| Built-in `github-authentication` / Copilot extension sources | Present, inactive until user opts in | Source tree unchanged |
+| Telemetry | No endpoint configured | No `aiConfig` / telemetry keys in product.json |
+| Experiments / assignment service | Inert | `experimentsEnabled()` needs `tasConfig` (absent) and telemetry level `all` |
+| Settings Sync | Not configured | No `configurationSync` store |
+| Copilot / GitHub sign-in | Opt-in only | `chat.disableAIFeatures=true`; title-bar and Welcome sign-in affordances default off; `trustedExtensionAuthAccess={}`. `defaultChatAgent` is **retained in its upstream shape** because a large part of the chat code dereferences it without a guard (removing it threw at start-up) |
+| Built-in `github-authentication` and Copilot extension sources | Present, inactive until the user opts in | Source tree unchanged |
+| Webview external endpoint (`vscode-cdn.net`) | Retained, not exercised | Read only by the browser/web environment service; desktop Markdown preview rendered with no proxied request |
+| `agentsTelemetryAppName` | Retained | A label for the extension-host `appHost` property; no endpoint |
+| Built-in `ms-vscode.js-debug*` (MIT) | Present | Fetched from GitHub at build time, not from a Marketplace; redistribution review at Gate 3 |
 
-### Known residuals
+### Network observation: method and limits
 
-- Window title shows "Nayther Scope Dev Dev" in unbuilt dev runs (upstream appends " Dev").
-- Walkthrough text still reads "Get started with VS Code"; in-app title-bar/walkthrough logo is still the upstream SVG. Localized strings and `resources/*/code-icon.svg` are not rebranded in Gate 1.
-- Installer bitmaps (`inno-*.bmp`) and macOS/Linux assets are unchanged.
-- Dev-mode shared data root is `~/.nayther-scope-dev-shared`, outside `--user-data-dir`.
-- No automated tests were run for the two default changes; unit tests asserting the old defaults, if any, are unverified.
+Fresh isolated profile, three independent observers over about 4 minutes (start-up, Welcome idle, Extensions view and search, Chat shortcut, Markdown preview, 60 s idle):
 
-## Review follow-up (round 2)
+1. a local logging proxy (`--proxy-server` plus `HTTP(S)_PROXY`) that answers 502 to everything and records only method and host:port;
+2. a 150 ms `netstat` sampler over all `Nayther Scope.exe` processes for non-loopback TCP;
+3. the Windows DNS client cache before and after.
 
-### What changed after PR review (5521583464, 5521622128)
+Result: **0 proxy requests, 0 sampled non-loopback connections.** The DNS cache gained `cafe.github.com` and `chatgpt.com`; a 120 s control with the app closed showed the cache also gaining unrelated hosts, so those entries are **unattributed** (machine-wide cache, administrator-only ETW not used). This is bounded evidence that **no unauthorised traffic was observed in these scenarios**, not proof of network isolation: a proxy sees only proxy-aware clients, the Chat view was not opened because AI features are hidden, and GitHub sign-in was deliberately not attempted. Upstream Copilot endpoints still exist in `defaultChatAgent`; the boundary is the opt-in setting, not removal.
 
-- **Name:** `nameShort`/`nameLong` are now `Nayther Scope`; upstream appends ` Dev` for source runs, so the window title is `Nayther Scope Dev` and the built executable is `Nayther Scope.exe`. `dataFolderName` no longer ends in `-dev` (the dev run adds it).
-- **First-run brand surfaces:** every `VS Code` string in `gettingStartedContent.ts` and the onboarding title/aria label now reads `Nayther Scope`. `code-icon.svg` (title bar, walkthrough, banners, update tooltip) and the four `letterpress-*.svg` editor watermarks are replaced with an original "N" mark.
-- **Authentication boundary:** `trustedExtensionAuthAccess` emptied; `chat.titleBar.signIn.enabled` default `false`; the `experiment: { mode: 'auto' }` override removed from the onboarding flag. `defaultChatAgent` is kept in its upstream shape on purpose (a large part of the chat code dereferences it unguarded; removing it threw at start-up) and is gated by `chat.disableAIFeatures=true`. Experiments are inert regardless: `experimentsEnabled()` requires `tasConfig`, which this product.json does not define, plus `telemetry.telemetryLevel=all`.
-- **Tests added** (run locally; upstream Actions stay disabled):
-  - `src/vs/platform/product/test/node/naytherProduct.test.ts` – product.json identity and service boundary (6 passing, `npm run test-node -- --run ...`).
-  - `src/vs/workbench/contrib/welcomeGettingStarted/test/browser/naytherFirstRunDefaults.test.ts` – the four first-run defaults (5 passing, `scripts\test.bat --run ...`).
+## Data roots and isolation policy
 
-### Network observation method and result
+Everything the app writes, by root:
 
-Fresh isolated profile, three independent observers, 4 minutes covering start-up, Welcome idle, Extensions view + search, Chat shortcut, Markdown preview (a webview) and 60 s idle:
+| Root | Content | Controlled by | Isolated from VS Code / Code - OSS? |
+|---|---|---|---|
+| `--user-data-dir` (we pass `C:\src\gate1-*profile\user-data`) | settings, state DB, workspace storage, logs, caches | CLI flag | Yes, when the flag is used |
+| `--extensions-dir` | installed extensions | CLI flag | Yes, when the flag is used |
+| `~\.nayther-scope-dev-shared\sharedStorage\state.vscdb` (built app: `~\.nayther-scope-shared`) | cross-window shared storage | `sharedDataFolderName`, `--shared-data-dir`, or `VSCODE_PORTABLE\shared-data` | Yes: dedicated name; `~\.vscode-oss-shared` and `~\.vscode` were not modified in the observed run |
+| `~\.nayther-scope-dev\argv.json` (built app: `~\.nayther-scope\argv.json`) | persistent runtime arguments | `dataFolderName` (resolved under the home directory) | Yes: dedicated name; **not** relocated by `--user-data-dir` |
+| `.build\electron\` and `out\` inside the checkout | binaries and compiled code | build | n/a |
 
-1. A local logging proxy (`--proxy-server` plus `HTTP(S)_PROXY`) that answers 502 to everything and records only method + host:port.
-2. A 150 ms `netstat` sampler over all `Nayther Scope.exe` processes for non-loopback TCP.
-3. Windows DNS client cache before/after.
+Policy:
 
-Result: **0 proxy requests, 0 sampled non-loopback connections.** The DNS cache gained `cafe.github.com` and `chatgpt.com`; a 120 s control with the app closed showed the cache also gaining `api.github.com`, `api.anthropic.com` and unrelated vendor hosts, so the cache is machine-wide and these entries are **not attributable** to the app. Limits: a proxy only sees proxy-aware clients, per-process DNS attribution needs administrator ETW (not used), and Chat was exercised by shortcut only (AI features are hidden, so no chat view opened). This is evidence of absence under these scenarios, not a proof for every path. GitHub sign-in itself was deliberately not attempted.
+1. **Default (Gate 1):** named Nayther roots in the user's home directory plus explicit `--user-data-dir` / `--extensions-dir`. These cannot collide with VS Code or Code - OSS because every name is different.
+2. **Single-root option:** setting `VSCODE_PORTABLE=<dir>` (or `--shared-data-dir` for the shared store only) places data under one directory. Not used in Gate 1 and not changed by this work.
+3. The app **never** reads, migrates, merges or deletes another application's profile. Cleanup of the named roots is manual and owner-initiated; Gate 1 deletes nothing.
+4. Evidence from these roots (state DBs, `argv.json`, logs, extensions) stays local and is never attached to the PR.
 
-### Shared data root
+## Tests
 
-`environmentService.appSharedDataHome` = `--shared-data-dir`, else `VSCODE_PORTABLE\shared-data`, else `~\<sharedDataFolderName>`. Observed: `~\.nayther-scope-dev-shared\sharedStorage\state.vscdb` (12 KB, created by this app); `~\.vscode-oss-shared` and `~\.vscode` were not modified during the run (timestamps predate it). Also written outside `--user-data-dir`: `~\.nayther-scope-dev\argv.json`. To fully relocate both use `--shared-data-dir` / `VSCODE_PORTABLE`; Gate 1 does not change that. Cleanup is manual and never automatic.
+| Command | Declared `test(...)` | Reported passing | Difference |
+|---|---|---|---|
+| `npm run test-node -- --run src/vs/platform/product/test/node/naytherProduct.test.ts` | 5 | 6 | +1: the mocha harness appends `Errors › should not have unexpected errors in tests` |
+| `scripts\test.bat --run src/vs/workbench/contrib/welcomeGettingStarted/test/browser/naytherFirstRunDefaults.test.ts` | 5 | 6 | +1: the Electron harness prepends `Tests are using suiteSetup and setup correctly › assertCleanState` |
 
-### Remaining residuals
+Test names (exactly as printed by the runners):
 
-- `agentsTelemetryAppName: "agents"` is retained; it is only a label used for the extension-host `appHost` property and has no endpoint (no `aiConfig`). Telemetry level default is upstream; no telemetry endpoint exists in product.json.
-- `webviewContentExternalBaseUrlTemplate` (vscode-cdn.net) is retained: it is read only by the browser/web environment service (hard-coded fallback). The desktop Markdown preview rendered with no proxied request.
-- Built-in `ms-vscode.js-debug*` (MIT) are fetched from GitHub at build time, not from a Marketplace; redistribution review stays with Gate 3.
-- Not rebranded (deferred to Gate 3): installer `inno-*.bmp`, macOS/Linux icons and desktop files, Sessions-window letterpress/`vscodeLogoPath`, localized strings in language packs, `About` licence text.
-- Owner confirmation still required for: terminal command output (panel opens, output not captured in the automated smoke), About dialog text, and a repeat of the Explorer/save-reopen check on this build.
+- Node: `identity does not reuse upstream Code - OSS / Microsoft identifiers`; `base display name has no Dev suffix (the dev run adds it once)`; `no Microsoft gallery, update, telemetry, sync or experiment services configured`; `no extension is silently trusted for authentication access`; `generic editor, terminal and git support stay in the tree`.
+- Browser: `AI features are disabled by default`; `Copilot sign-in affordance in the title bar is off by default`; `Welcome page GitHub sign-in button is off by default`; `experimental onboarding is off and not remotely assignable`; `walkthrough does not offer unconfigured Marketplace, Sync or Copilot steps`.
+
+What these tests prove: configuration defaults and static content. They do **not** prove that authentication can never occur or that no user action reaches other services; that rests on the inventory and the bounded network observation above. Regression for Explorer/Editor/Terminal/Git remains the hands-on smoke. Upstream GitHub Actions stay disabled; tests were run locally. Also run: the existing `gettingStartedMarkdownRenderer.test.ts` (2 passing) and ESLint on the changed TypeScript files.
+
+## Licensing of new files
+
+The two new test files carry the repository's standard file header (`Copyright (c) Microsoft Corporation … MIT`), because this repository's ESLint rule (`header/header`) requires that exact header on every source file and `LICENSE.txt` is the repository's MIT licence. A comment under the header states that the tests were written for the Nayther Scope fork; they are licensed under the repository MIT licence. No existing Microsoft or third-party copyright notice was edited or removed (`LICENSE.txt` and `ThirdPartyNotices.txt` are unchanged). Whether Nayther Scope contributions should carry their own copyright line is a product-owner licensing decision for Gate 3 and is not made here.
+
+## Remaining residuals
+
+- Help → About text and the hands-on smoke on this exact build: owner confirmation pending.
+- DNS entries `cafe.github.com` and `chatgpt.com` could not be attributed; optional administrator ETW is not required unless an unexplained connection is observed.
+- Upstream VS Code illustrations remain in hidden/opt-in walkthrough steps.
+- Deferred to Gate 3: installer `inno-*.bmp`, macOS/Linux icons and desktop files, Sessions-window `letterpress-sessions-*` / `vscodeLogoPath`, language-pack strings, About licence text, distribution licence inventory.
+
+## Review history
+
+- **5521583464** (first review): requested single Dev suffix, first-run rebrand, auth/experiment audit, bounded network claim, tests, shared-data proof — addressed in `41cf779` and `d6a8e69`.
+- **5521622128**: owner GUI 4/4 PASS on `41cf779`.
+- **5521891428** (round 2): requested this reconciliation — stale sections removed, test counts reconciled, first-run links audited, licence header assessed, data roots and policy written down.

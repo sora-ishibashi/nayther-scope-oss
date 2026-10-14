@@ -242,9 +242,10 @@ function createCopilotSetupStep(id: string, button: string, when: string, includ
 		id,
 		title: CopilotStepTitle,
 		description,
-		when: `${when} && !chatSetupHidden && !chatSetupDisabledInWorkspace`,
+		// Nayther Scope (NAY-94): GitHub Copilot is an upstream opt-in integration, never shown unless AI features are enabled.
+		when: `!config.chat.disableAIFeatures && ${when} && !chatSetupHidden && !chatSetupDisabledInWorkspace`,
 		media: {
-			type: 'svg', altText: 'Nayther Scope Copilot multi file edits', path: 'multi-file-edits.svg'
+			type: 'svg', altText: 'GitHub Copilot multi file edits', path: 'multi-file-edits.svg'
 		},
 	};
 }
@@ -278,8 +279,8 @@ export const walkthroughs: GettingStartedWalkthroughContent = [
 				},
 				{
 					id: 'videoTutorial',
-					title: localize('gettingStarted.videoTutorial.title', "Watch video tutorials"),
-					description: localize('gettingStarted.videoTutorial.description.interpolated', "Watch the first in a series of short & practical video tutorials for Nayther Scope's key features.\n{0}", Button(localize('watch', "Watch Tutorial"), 'https://aka.ms/vscode-getting-started-video')),
+					title: localize('gettingStarted.videoTutorial.title', "Watch upstream VS Code video tutorials"),
+					description: localize('gettingStarted.videoTutorial.description.interpolated', "Short video tutorials published by the upstream Visual Studio Code project (Microsoft). They describe Visual Studio Code; the editor features are shared, but Nayther Scope has no Marketplace, Settings Sync or Copilot service.\n{0}", Button(localize('watch', "Watch Upstream Tutorial"), 'https://aka.ms/vscode-getting-started-video')),
 					media: { type: 'svg', altText: 'Nayther Scope Settings', path: 'learn.svg' },
 				}
 			]
@@ -492,7 +493,8 @@ export const walkthroughs: GettingStartedWalkthroughContent = [
 					id: 'settingsAndSync',
 					title: localize('gettingStarted.settings.title', "Tune your settings"),
 					description: localize('gettingStarted.settingsAndSync.description.interpolated', "Customize every aspect of Nayther Scope and [sync](command:workbench.userDataSync.actions.turnOn) customizations across devices.\n{0}", Button(localize('tweakSettings', "Open Settings"), 'command:toSide:workbench.action.openSettings')),
-					when: 'workspacePlatform != \'webworker\' && syncStatus != uninitialized',
+					// Nayther Scope (NAY-94): no Settings Sync service is configured in product.json.
+					when: 'false',
 					completionEvents: ['onEvent:sync-enabled'],
 					media: {
 						type: 'svg', altText: 'Nayther Scope Settings', path: 'settings.svg'
@@ -502,7 +504,8 @@ export const walkthroughs: GettingStartedWalkthroughContent = [
 					id: 'extensions',
 					title: localize('gettingStarted.extensions.title', "Code with extensions"),
 					description: localize('gettingStarted.extensions.description.interpolated', "Extensions are Nayther Scope's power-ups. They range from handy productivity hacks, expanding out-of-the-box features, to adding completely new capabilities.\n{0}", Button(localize('browsePopular', "Browse Popular Extensions"), 'command:workbench.extensions.action.showPopularExtensions')),
-					when: 'workspacePlatform != \'webworker\'',
+					// Nayther Scope (NAY-94): no extension marketplace is configured in product.json.
+					when: 'false',
 					media: {
 						type: 'svg', altText: 'Nayther Scope extension marketplace with featured language extensions', path: 'extensions.svg'
 					},
