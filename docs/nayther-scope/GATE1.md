@@ -43,10 +43,10 @@ The pinned `1.141.2` upstream `build/npm/preinstall.ts` checks Visual Studio 202
 
 | Field | Upstream (Code - OSS) | Nayther Scope Dev |
 |---|---|---|
-| `nameShort` / `nameLong` | Code - OSS | Nayther Scope Dev |
+| `nameShort` / `nameLong` | Code - OSS | Nayther Scope (the dev run appends ` Dev` once: window title "Nayther Scope Dev", built exe `Nayther Scope.exe`) |
 | `applicationName` | code-oss | nayther-scope |
-| `dataFolderName` / `sharedDataFolderName` | .vscode-oss / .vscode-oss-shared | .nayther-scope-dev / .nayther-scope-dev-shared |
-| `serverApplicationName` / `serverDataFolderName` / `tunnelApplicationName` | code-server-oss / .vscode-server-oss / code-tunnel-oss | nayther-scope-server / .nayther-scope-server-dev / nayther-scope-tunnel |
+| `dataFolderName` / `sharedDataFolderName` | .vscode-oss / .vscode-oss-shared | .nayther-scope (dev run: .nayther-scope-dev, holds argv.json) / .nayther-scope-dev-shared |
+| `serverApplicationName` / `serverDataFolderName` / `tunnelApplicationName` | code-server-oss / .vscode-server-oss / code-tunnel-oss | nayther-scope-server / .nayther-scope-server / nayther-scope-tunnel |
 | `win32MutexName`, tunnel mutexes | vscodeoss* | naytherscopedev* |
 | `win32DirName` / `win32NameVersion` / `win32RegValueName` / `win32AppUserModelId` / `win32ShellNameShort` | Microsoft Code OSS / CodeOSS / Microsoft.CodeOSS / C&ode - OSS | Nayther Scope Dev / NaytherScopeDev / Nayther.Scope.Dev / Nayther &Scope Dev |
 | `win32{x64,arm64}{,User}AppId` | upstream GUIDs | four newly generated GUIDs (not registered anywhere yet) |
@@ -55,6 +55,7 @@ The pinned `1.141.2` upstream `build/npm/preinstall.ts` checks Visual Studio 202
 | `reportIssueUrl` | microsoft/vscode issues | this fork's issues |
 | `builtInExtensionsEnabledWithAutoUpdates` | `GitHub.copilot-chat` | `[]` |
 | `voiceWsUrl` | Microsoft voice endpoint | removed |
+| `trustedExtensionAuthAccess` | GitHub.copilot-chat / vscode.github-authentication trusted | `{}` (every extension must ask for account access) |
 
 Provisional icon: `resources/win32/code.ico`, `code_150x150.png`, `code_70x70.png` (generated "N" mark, no Microsoft artwork); `VisualElementsManifest.xml` short name updated.
 
@@ -85,3 +86,36 @@ Provisional icon: `resources/win32/code.ico`, `code_150x150.png`, `code_70x70.pn
 - Installer bitmaps (`inno-*.bmp`) and macOS/Linux assets are unchanged.
 - Dev-mode shared data root is `~/.nayther-scope-dev-shared`, outside `--user-data-dir`.
 - No automated tests were run for the two default changes; unit tests asserting the old defaults, if any, are unverified.
+
+## Review follow-up (round 2)
+
+### What changed after PR review (5521583464, 5521622128)
+
+- **Name:** `nameShort`/`nameLong` are now `Nayther Scope`; upstream appends ` Dev` for source runs, so the window title is `Nayther Scope Dev` and the built executable is `Nayther Scope.exe`. `dataFolderName` no longer ends in `-dev` (the dev run adds it).
+- **First-run brand surfaces:** every `VS Code` string in `gettingStartedContent.ts` and the onboarding title/aria label now reads `Nayther Scope`. `code-icon.svg` (title bar, walkthrough, banners, update tooltip) and the four `letterpress-*.svg` editor watermarks are replaced with an original "N" mark.
+- **Authentication boundary:** `trustedExtensionAuthAccess` emptied; `chat.titleBar.signIn.enabled` default `false`; the `experiment: { mode: 'auto' }` override removed from the onboarding flag. `defaultChatAgent` is kept in its upstream shape on purpose (a large part of the chat code dereferences it unguarded; removing it threw at start-up) and is gated by `chat.disableAIFeatures=true`. Experiments are inert regardless: `experimentsEnabled()` requires `tasConfig`, which this product.json does not define, plus `telemetry.telemetryLevel=all`.
+- **Tests added** (run locally; upstream Actions stay disabled):
+  - `src/vs/platform/product/test/node/naytherProduct.test.ts` – product.json identity and service boundary (6 passing, `npm run test-node -- --run ...`).
+  - `src/vs/workbench/contrib/welcomeGettingStarted/test/browser/naytherFirstRunDefaults.test.ts` – the four first-run defaults (5 passing, `scripts\test.bat --run ...`).
+
+### Network observation method and result
+
+Fresh isolated profile, three independent observers, 4 minutes covering start-up, Welcome idle, Extensions view + search, Chat shortcut, Markdown preview (a webview) and 60 s idle:
+
+1. A local logging proxy (`--proxy-server` plus `HTTP(S)_PROXY`) that answers 502 to everything and records only method + host:port.
+2. A 150 ms `netstat` sampler over all `Nayther Scope.exe` processes for non-loopback TCP.
+3. Windows DNS client cache before/after.
+
+Result: **0 proxy requests, 0 sampled non-loopback connections.** The DNS cache gained `cafe.github.com` and `chatgpt.com`; a 120 s control with the app closed showed the cache also gaining `api.github.com`, `api.anthropic.com` and unrelated vendor hosts, so the cache is machine-wide and these entries are **not attributable** to the app. Limits: a proxy only sees proxy-aware clients, per-process DNS attribution needs administrator ETW (not used), and Chat was exercised by shortcut only (AI features are hidden, so no chat view opened). This is evidence of absence under these scenarios, not a proof for every path. GitHub sign-in itself was deliberately not attempted.
+
+### Shared data root
+
+`environmentService.appSharedDataHome` = `--shared-data-dir`, else `VSCODE_PORTABLE\shared-data`, else `~\<sharedDataFolderName>`. Observed: `~\.nayther-scope-dev-shared\sharedStorage\state.vscdb` (12 KB, created by this app); `~\.vscode-oss-shared` and `~\.vscode` were not modified during the run (timestamps predate it). Also written outside `--user-data-dir`: `~\.nayther-scope-dev\argv.json`. To fully relocate both use `--shared-data-dir` / `VSCODE_PORTABLE`; Gate 1 does not change that. Cleanup is manual and never automatic.
+
+### Remaining residuals
+
+- `agentsTelemetryAppName: "agents"` is retained; it is only a label used for the extension-host `appHost` property and has no endpoint (no `aiConfig`). Telemetry level default is upstream; no telemetry endpoint exists in product.json.
+- `webviewContentExternalBaseUrlTemplate` (vscode-cdn.net) is retained: it is read only by the browser/web environment service (hard-coded fallback). The desktop Markdown preview rendered with no proxied request.
+- Built-in `ms-vscode.js-debug*` (MIT) are fetched from GitHub at build time, not from a Marketplace; redistribution review stays with Gate 3.
+- Not rebranded (deferred to Gate 3): installer `inno-*.bmp`, macOS/Linux icons and desktop files, Sessions-window letterpress/`vscodeLogoPath`, localized strings in language packs, `About` licence text.
+- Owner confirmation still required for: terminal command output (panel opens, output not captured in the automated smoke), About dialog text, and a repeat of the Explorer/save-reopen check on this build.

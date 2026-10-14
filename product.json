@@ -1,8 +1,8 @@
 {
-	"nameShort": "Nayther Scope Dev",
-	"nameLong": "Nayther Scope Dev",
+	"nameShort": "Nayther Scope",
+	"nameLong": "Nayther Scope",
 	"applicationName": "nayther-scope",
-	"dataFolderName": ".nayther-scope-dev",
+	"dataFolderName": ".nayther-scope",
 	"sharedDataFolderName": ".nayther-scope-dev-shared",
 	"win32MutexName": "naytherscopedev",
 	"licenseName": "MIT",
@@ -12,7 +12,7 @@
 	"serverLicense": [],
 	"serverLicensePrompt": "",
 	"serverApplicationName": "nayther-scope-server",
-	"serverDataFolderName": ".nayther-scope-server-dev",
+	"serverDataFolderName": ".nayther-scope-server",
 	"tunnelApplicationName": "nayther-scope-tunnel",
 	"win32DirName": "Nayther Scope Dev",
 	"win32NameVersion": "Nayther Scope Dev",
@@ -156,17 +156,7 @@
 		"mcpConnectorsUrl": "https://api.github.com/copilot-connectors/api/v1",
 		"managedSettingsUrl": "https://api.github.com/copilot_internal/managed_settings"
 	},
-	"trustedExtensionAuthAccess": {
-		"github": [
-			"GitHub.copilot-chat"
-		],
-		"github-enterprise": [
-			"GitHub.copilot-chat"
-		],
-		"microsoft": [
-			"vscode.github-authentication"
-		]
-	},
+	"trustedExtensionAuthAccess": {},
 	"onboardingKeymaps": [
 		{
 			"id": "vscode",
