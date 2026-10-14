@@ -1,8 +1,8 @@
 # Nayther Scope — Windows desktop Gate 1 (NAY-94)
 
-**Status:** Implementation and owner-operated Windows GUI acceptance PASS on the exact build from `449705399a941b7576655e84e3d713c52ee7750e` (2026-10-15 JST). **Review in progress; Draft PR is not yet authorized for merge**. The shared-data path claim for a separately packaged app remains unverified and is deferred to Gate 3. This is an **independent, unofficial** desktop application built from the open-source Code - OSS repository. It is **not Microsoft VS Code** and may not use Microsoft marks, proprietary release binaries, product services, credentials, or extension marketplace rights merely by virtue of the MIT source license.
+**Status: Gate 1 ACCEPTED and merged (2026-10-15 JST).** Owner accepted the Windows source-build GUI 5/5 on code commit `449705399a941b7576655e84e3d713c52ee7750e`; follow-up `e64021f` changed docs only. Approved PR #1 was squash-merged into `integration/nayther-scope-0.1.0` at `4508b9d0dc21a18b96265e9288a257cafa24105d`. This is **not** a packaged/public release. Packaged-app data paths remain unverified and deferred to Gate 3. This is an **independent, unofficial** desktop application built from the open-source Code - OSS repository. It is **not Microsoft VS Code** and may not use Microsoft marks, proprietary release binaries, product services, credentials, or extension marketplace rights merely by virtue of the MIT source license.
 
-**Base:** [upstream Code - OSS 1.141.2](https://github.com/microsoft/vscode/tree/1.141.2), exactly `16507d91be0dc1ce4f94c04d4d0430210b8685d9`. On this fork, `baseline/code-oss-1.141.2` is a never-modify reference; `main` tracks upstream separately. Implement exclusively on `feat/nay-94-gate1-identity`. All PRs for Gate 1 **must target the pinned baseline branch**, never floating `main`.
+**Base:** [upstream Code - OSS 1.141.2](https://github.com/microsoft/vscode/tree/1.141.2), exactly `16507d91be0dc1ce4f94c04d4d0430210b8685d9`. On this fork, `baseline/code-oss-1.141.2` is a **never-modify reference**, and `main` tracks upstream separately. Gate 1 source work occurred on `feat/nay-94-gate1-identity`; its PR #1 was initially based on the frozen baseline for review but **retargeted before merge** to a newly created `integration/nayther-scope-0.1.0` branch starting at the same upstream SHA. This preserves the baseline. Future Nayther product branches should start from the integration branch, not alter the baseline or upstream-tracking `main`.
 
 **Tracking:** [NAY-94](https://nayther.atlassian.net/browse/NAY-94); predecessor [NAY-92](https://nayther.atlassian.net/browse/NAY-92). Existing Scope Core and Canvas remain in a separate repo; **no integration until Gate 2**.
 
@@ -27,7 +27,7 @@ The pinned `1.141.2` upstream `build/npm/preinstall.ts` checks Visual Studio 202
 - Keep GitHub Actions disabled on this public fork until a narrowly scoped workflow is reviewed. Do not upload machine-specific traces/secrets.
 - Keep all source license and copyright notices intact; review bundled components independently for redistribution.
 - **Gate 1 excludes:** React Flow Canvas/GraphDocument integration (Gate 2), signed installer/portable Windows release (Gate 3), public release (Gate 4), upstream bug issue creation, unapproved Microsoft service use, destructive workspace cleanup.
-- **No merge, tag, release, credentials or profile deletion** without explicit owner approval.
+- **Gate 1 merge was explicitly owner-approved and completed** via PR #1 on the product integration branch only. Future merges, tags, releases, profile deletion or credential operations require separate owner approval.
 
 ## Acceptance checklist (current state)
 
@@ -41,7 +41,7 @@ Legend: **PASS** = locally reported or owner-tested against the Gate 1 source bu
 | 3 | No unapproved auth / telemetry / Marketplace / update on a clean first start | **PASS (bounded)** | Service inventory below; network observation limits stated |
 | 4 | Windows build and launch | **PASS** | `npm install`, `npm run compile` (0 errors) and launch from `scripts\code.bat` on Windows 11 x64 |
 | 5 | Scratch Explorer / editor / terminal / Git smoke | **PASS** | Owner manually repeated Explorer folder access, Editor file save/close/reopen, integrated Terminal real output (`node --version`, `git --version`) and Git status/Source Control changes on the latest built source (commit `4497053`, 2026-10-15); separate previous 4/4 PASS on older commit `41cf779` |
-| 6 | Baseline remains pinned and recoverable | **PASS** | `baseline/code-oss-1.141.2` = `16507d91…`, untouched; Gate 1 work is in a separate worktree/branch |
+| 6 | Baseline remains pinned and recoverable | **PASS** | `baseline/code-oss-1.141.2` = `16507d91…`, untouched; Gate 1 changes merged only into `integration/nayther-scope-0.1.0`, PR #1 squash commit `4508b9d` |
 | 7 | MIT and Microsoft notices preserved | **PASS** | No licence or copyright text removed; new files carry the repository header (see "Licensing of new files") |
 | 8 | Logs reviewed / redacted; no secrets, profiles or extensions in the PR | **PASS** | Raw evidence stays on the local machine only |
 | 9 | Installer images, non-Windows assets, Sessions window brand, language packs, distribution licence inventory | **DEFERRED** | Gate 3 |
