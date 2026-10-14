@@ -1,0 +1,38 @@
+# Nayther Scope — Windows desktop Gate 1 (NAY-94)
+
+**Status:** In progress / design-first Draft. This is an **independent, unofficial** desktop application built from the open-source Code - OSS repository. It is **not Microsoft VS Code** and may not use Microsoft marks, proprietary release binaries, product services, credentials, or extension marketplace rights merely by virtue of the MIT source license.
+
+**Base:** [upstream Code - OSS 1.141.2](https://github.com/microsoft/vscode/tree/1.141.2), exactly `16507d91be0dc1ce4f94c04d4d0430210b8685d9`. On this fork, `baseline/code-oss-1.141.2` is a never-modify reference; `main` tracks upstream separately. Implement exclusively on `feat/nay-94-gate1-identity`. All PRs for Gate 1 **must target the pinned baseline branch**, never floating `main`.
+
+**Tracking:** [NAY-94](https://nayther.atlassian.net/browse/NAY-94); predecessor [NAY-92](https://nayther.atlassian.net/browse/NAY-92). Existing Scope Core and Canvas remain in a separate repo; **no integration until Gate 2**.
+
+## Gate 1 goals
+
+1. **Non-conflicting identity:** Audit the pinned `product.json`, platform build/packaging metadata and Windows assets. Update the app's name, applicationName, dataFolderName, sharedDataFolderName, serverDataFolderName (where applicable), URL protocol, mutexes, registered app IDs and associated Windows identity values consistently to use the Nayther Scope namespace. Document changed fields and generated GUIDs; never reuse Microsoft's registered app identities. Avoid promising final installer/registration integration at Gate 1.
+2. **Brand separation:** Use a uniquely recognizable, non-Microsoft **temporary** app icon until a final owner-approved identity is available. Visible title, About/product metadata, binary name and app shortcut (if generated) must not claim the product is an official Microsoft build. Retain the original MIT copyright and license notices.
+3. **Data boundaries:** At launch, provide unique clean `--user-data-dir` and `--extensions-dir` outside any official VS Code or baseline Code - OSS profile. Validate actual read/write paths, not just settings. Do not migrate, read, purge, or log into existing personal profiles.
+4. **Service & privacy audit:** Inventory startup integrations that can trigger GitHub/Copilot login, built-in extensions, telemetry, auto-updates, extension gallery, remote/webview origins and other external communication. Treat proprietary URLs, Microsoft API endpoints, Marketplace, credential access and product services as **unapproved unless independently justified**. Disable unsafe defaults or fail closed without silently breaking core editor UX; demonstrate clean offline/basic-start behavior. Prefer explicit opt-in where service terms allow. No broad PAT, secret logging, or automatic enrollment.
+5. **Baseline function:** Rebuild/launch on Windows x64 using the already established reproducible setup. Verify Explorer, editor save/reopen, integrated terminal and local Git status against a disposable scratch folder. Collect path/version and isolation evidence without including tokens, account metadata, `user-data` or raw `exts` in a public PR.
+6. **Upstream diff:** All modifications confined to this Gate 1 branch, with a concise changed-files rationale and explicit risk/unknown list. Do not modify the frozen baseline or upstream tracking branch.
+
+## Windows-specific notes
+
+The pinned `1.141.2` upstream `build/npm/preinstall.ts` checks Visual Studio 2022/2019 paths. Windows Build Tools 2026 may need a **process-local** `vs2022_install` variable pointing to the actual installed Build Tools directory; this is a directory-existence preflight workaround, **not** proof that the installed toolset is VS 2022. Preserve a record of the exact selected Python executable and any `GYP_MSVS_VERSION` used. The desktop launch environment must not inherit `ELECTRON_RUN_AS_NODE=1` from a parent VS Code/agent session; clear it **in the launch child process**, never system-wide. Validate actual toolchain behavior before modifying any upstream code.
+
+## Security and release gates
+
+- A prior verbose baseline development log was found to contain **account-linked Copilot token claim metadata**. Do not publish or copy raw logs, auth databases, user profiles or extensions to GitHub/Jira. Scrub new evidence locally and review redacted material before sharing. Do not delete any prior user data without explicit owner approval.
+- Keep GitHub Actions disabled on this public fork until a narrowly scoped workflow is reviewed. Do not upload machine-specific traces/secrets.
+- Keep all source license and copyright notices intact; review bundled components independently for redistribution.
+- **Gate 1 excludes:** React Flow Canvas/GraphDocument integration (Gate 2), signed installer/portable Windows release (Gate 3), public release (Gate 4), upstream bug issue creation, unapproved Microsoft service use, destructive workspace cleanup.
+- **No merge, tag, release, credentials or profile deletion** without explicit owner approval.
+
+## Definition of done
+
+- [ ] Independently named Nayther Scope Dev app (window, About, icons and principal identity fields).
+- [ ] Independent Windows AppId / protocol / mutex / profile and extensions directories confirmed non-colliding.
+- [ ] No unapproved auth/telemetry/Marketplace/updates on first clean startup; service inventory with supported/disabled/unknown statuses.
+- [ ] Windows build and launch PASS; scratch Explorer/editor/terminal/Git smoke PASS.
+- [ ] Unmodified baseline remains pinned and recoverable; upstream diff bounded and documented.
+- [ ] MIT and required third-party notices preserved.
+- [ ] Local logs reviewed/redacted; Draft PR ready for independent review and owner sign-off.
