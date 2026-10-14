@@ -1,6 +1,6 @@
 # Nayther Scope — Windows desktop Gate 1 (NAY-94)
 
-**Status:** Implementation complete for review; **Draft, not accepted**. Owner GUI acceptance of the latest build (Help → About, Explorer, Editor, Terminal, Git) is the only open acceptance item. This is an **independent, unofficial** desktop application built from the open-source Code - OSS repository. It is **not Microsoft VS Code** and may not use Microsoft marks, proprietary release binaries, product services, credentials, or extension marketplace rights merely by virtue of the MIT source license.
+**Status:** Implementation and owner-operated Windows GUI acceptance PASS on the exact build from `449705399a941b7576655e84e3d713c52ee7750e` (2026-10-15 JST). **Review in progress; Draft PR is not yet authorized for merge**. The shared-data path claim for a separately packaged app remains unverified and is deferred to Gate 3. This is an **independent, unofficial** desktop application built from the open-source Code - OSS repository. It is **not Microsoft VS Code** and may not use Microsoft marks, proprietary release binaries, product services, credentials, or extension marketplace rights merely by virtue of the MIT source license.
 
 **Base:** [upstream Code - OSS 1.141.2](https://github.com/microsoft/vscode/tree/1.141.2), exactly `16507d91be0dc1ce4f94c04d4d0430210b8685d9`. On this fork, `baseline/code-oss-1.141.2` is a never-modify reference; `main` tracks upstream separately. Implement exclusively on `feat/nay-94-gate1-identity`. All PRs for Gate 1 **must target the pinned baseline branch**, never floating `main`.
 
@@ -31,16 +31,16 @@ The pinned `1.141.2` upstream `build/npm/preinstall.ts` checks Visual Studio 202
 
 ## Acceptance checklist (current state)
 
-Legend: **PASS** = verified on this branch; **OWNER** = needs the owner's hands-on check of the latest build; **DEFERRED** = intentionally Gate 3.
+Legend: **PASS** = locally reported or owner-tested against the Gate 1 source build; **DEFERRED** = outside Gate 1 (Gate 3). For build/automated test runs, raw logs remain local and were not independently rerun by the remote reviewer.
 
 | # | Item | State | Evidence |
 |---|---|---|---|
 | 1 | Independently named app: window title, executable, in-app icon and first-run text | **PASS** | Title `Nayther Scope Dev` (single ` Dev`), executable `Nayther Scope.exe`, "N" title-bar icon, "Get started with Nayther Scope" (screenshots kept locally, not published) |
-| 1b | Help → About identity | **OWNER** | Not capturable by the automated smoke |
+| 1b | Help → About identity | **PASS** | Owner manually checked Help → About name and version (Code - OSS source version `1.141.2`) in the latest `4497053` build on 2026-10-15 |
 | 2 | AppId / protocol / mutex / data roots do not reuse upstream values | **PASS** | `naytherProduct.test.ts` ("identity does not reuse …") + table below |
 | 3 | No unapproved auth / telemetry / Marketplace / update on a clean first start | **PASS (bounded)** | Service inventory below; network observation limits stated |
 | 4 | Windows build and launch | **PASS** | `npm install`, `npm run compile` (0 errors) and launch from `scripts\code.bat` on Windows 11 x64 |
-| 5 | Scratch Explorer / editor / terminal / Git smoke | **OWNER** | Owner reported 4/4 PASS on commit `41cf779` (review 5521622128). Automated SendKeys smoke on a later build showed the Source Control panel listing the scratch changes and the Terminal panel opening; terminal output was not captured. Must be repeated by the owner on this HEAD |
+| 5 | Scratch Explorer / editor / terminal / Git smoke | **PASS** | Owner manually repeated Explorer folder access, Editor file save/close/reopen, integrated Terminal real output (`node --version`, `git --version`) and Git status/Source Control changes on the latest built source (commit `4497053`, 2026-10-15); separate previous 4/4 PASS on older commit `41cf779` |
 | 6 | Baseline remains pinned and recoverable | **PASS** | `baseline/code-oss-1.141.2` = `16507d91…`, untouched; Gate 1 work is in a separate worktree/branch |
 | 7 | MIT and Microsoft notices preserved | **PASS** | No licence or copyright text removed; new files carry the repository header (see "Licensing of new files") |
 | 8 | Logs reviewed / redacted; no secrets, profiles or extensions in the PR | **PASS** | Raw evidence stays on the local machine only |
@@ -123,7 +123,7 @@ Everything the app writes, by root:
 |---|---|---|---|
 | `--user-data-dir` (we pass `C:\src\gate1-*profile\user-data`) | settings, state DB, workspace storage, logs, caches | CLI flag | Yes, when the flag is used |
 | `--extensions-dir` | installed extensions | CLI flag | Yes, when the flag is used |
-| `~\.nayther-scope-dev-shared\sharedStorage\state.vscdb` (built app: `~\.nayther-scope-shared`) | cross-window shared storage | `sharedDataFolderName`, `--shared-data-dir`, or `VSCODE_PORTABLE\shared-data` | Yes: dedicated name; `~\.vscode-oss-shared` and `~\.vscode` were not modified in the observed run |
+| `~\.nayther-scope-dev-shared\sharedStorage\state.vscdb` (observed in source Dev run; separately packaged app path unverified) | cross-window shared storage | `sharedDataFolderName` currently equals `.nayther-scope-dev-shared` in `product.json`; may be overridden by `--shared-data-dir` or `VSCODE_PORTABLE\shared-data` | Dedicated namespace verified in observed Dev run; `~\.vscode-oss-shared` and `~\.vscode` were not modified. Do **not** assume a packaged build uses `.nayther-scope-shared` without testing |
 | `~\.nayther-scope-dev\argv.json` (built app: `~\.nayther-scope\argv.json`) | persistent runtime arguments | `dataFolderName` (resolved under the home directory) | Yes: dedicated name; **not** relocated by `--user-data-dir` |
 | `.build\electron\` and `out\` inside the checkout | binaries and compiled code | build | n/a |
 
@@ -133,6 +133,8 @@ Policy:
 2. **Single-root option:** setting `VSCODE_PORTABLE=<dir>` (or `--shared-data-dir` for the shared store only) places data under one directory. Not used in Gate 1 and not changed by this work.
 3. The app **never** reads, migrates, merges or deletes another application's profile. Cleanup of the named roots is manual and owner-initiated; Gate 1 deletes nothing.
 4. Evidence from these roots (state DBs, `argv.json`, logs, extensions) stays local and is never attached to the PR.
+
+**Additional packaging clarification:** the standalone distribution build was not produced during Gate 1. The shipped app's shared data root, installer assets, and actual profile behavior require separate Gate 3 validation. The dev build's observed shared storage path is recorded above; all existing user profiles remain untouched.
 
 ## Tests
 
@@ -154,7 +156,7 @@ The two new test files carry the repository's standard file header (`Copyright (
 
 ## Remaining residuals
 
-- Help → About text and the hands-on smoke on this exact build: owner confirmation pending.
+- Help → About identity and the hands-on GUI smoke on the exact source Dev build: **owner-confirmed PASS (2026-10-15 JST, HEAD `4497053`)**. Source build acceptance is complete; no product binaries were packaged or distributed.
 - DNS entries `cafe.github.com` and `chatgpt.com` could not be attributed; optional administrator ETW is not required unless an unexplained connection is observed.
 - Upstream VS Code illustrations remain in hidden/opt-in walkthrough steps.
 - Deferred to Gate 3: installer `inno-*.bmp`, macOS/Linux icons and desktop files, Sessions-window `letterpress-sessions-*` / `vscodeLogoPath`, language-pack strings, About licence text, distribution licence inventory.
